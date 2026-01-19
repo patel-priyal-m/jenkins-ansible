@@ -5,7 +5,7 @@ pipeline{
         stage('Copy files to ansible server') {
             steps {
                 echo 'Copying files to ansible control node...'
-                sshagent (credentials: ['ansible-server-key']) {
+                sshagent (credentials: ['anisble-server-key']) {
                     sh '''
                         scp -o StrictHostKeyChecking=no -r ./ansible/* root@137.184.175.128:/root 
                     '''
