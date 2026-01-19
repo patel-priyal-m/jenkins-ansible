@@ -13,7 +13,7 @@ pipeline {
                     '''
                     withCredentials([sshUserPrivateKey(credentialsId: 'ec2-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
                         sh '''
-                            scp -o StrictHostKeyChecking=no  ${KEYFILE} root@${ANSIBLE_SERVER_IP}:/root/ssh-key.pem
+                            scp -o StrictHostKeyChecking=no  ${KEYFILE} root@${ANSIBLE_SERVER_IP}:~/.ssh/ssh-key.pem
                             '''
                     }
                 }
@@ -28,12 +28,22 @@ pipeline {
                     remote.host = ANSIBLE_SERVER_IP
                     remote.allowAnyHosts = true
 
-                    withCredentials([sshUserPrivateKey(credentialsId: 'anisble-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
+                    withCredentials([
+                        sshUserPrivateKey(credentialsId: 'anisble-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME'),
+                        [
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            credentialsId: 'aws-credentials',
+                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
+                    ]) {
                         remote.user = USERNAME
                         remote.identityFile = KEYFILE
-                        sshCommand remote: remote, command: '''
+                        sshCommand remote: remote, command: """
+                            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
                             ansible-playbook my-playbook.yaml
-                        '''
+                        """
                     }
                 }
             }
