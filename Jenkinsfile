@@ -1,17 +1,19 @@
 pipeline {
     agent any
-
+    environment {
+        ANSIBLE_SERVER_IP = '137.184.175.128'
+    }
     stages {
         stage('Copy files to ansible server') {
             steps {
                 echo 'Copying files to ansible control node...'
                 sshagent(credentials: ['anisble-server-key']) {
                     sh '''
-                        scp -o StrictHostKeyChecking=no -r ./ansible/* root@137.184.175.128:/root
+                        scp -o StrictHostKeyChecking=no -r ./ansible/* root@${ANSIBLE_SERVER_IP}:/root
                     '''
                     withCredentials([sshUserPrivateKey(credentialsId: 'ec2-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
                         sh '''
-                            scp -o StrictHostKeyChecking=no  ${KEYFILE} root@137.184.175.128:/root/ssh-key.pem
+                            scp -o StrictHostKeyChecking=no  ${KEYFILE} root@${ANSIBLE_SERVER_IP}:/root/ssh-key.pem
                             '''
                     }
                 }
@@ -23,16 +25,15 @@ pipeline {
                 script {
                     def remote = [:]
                     remote.name = 'ansible-server'
-                    remote.host = '137.184.175.128'
+                    remote.host = ANSIBLE_SERVER_IP
                     remote.allowAnyHosts = true
 
                     withCredentials([sshUserPrivateKey(credentialsId: 'anisble-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
                         remote.user = USERNAME
                         remote.identityFile = KEYFILE
                         sshCommand remote: remote, command: '''
-                            ls -l
+                            ansible-playbook my-playbook.yaml
                         '''
-                    // ansible-playbook /root/playbook.yml --private-key /root/ssh-key.pem -i /root/hosts.ini
                     }
                 }
             }
