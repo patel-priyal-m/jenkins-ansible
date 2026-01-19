@@ -11,7 +11,7 @@ pipeline{
                     '''
                     withCredentials([sshUserPrivateKey(credentialsId: 'ec2-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
                         sh '''
-                            scp -o StrictHostKeyChecking=no  ${KEYFILE} $USERNAME@137.184.175.128:/root/ssh-key.pem
+                            scp -o StrictHostKeyChecking=no  ${KEYFILE} $USERNAME@137.184.175.128:~/.ssh/ssh-key.pem
                             '''
                     }
                 }
