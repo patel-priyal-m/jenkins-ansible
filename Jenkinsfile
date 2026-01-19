@@ -13,6 +13,7 @@ pipeline{
                         sh '''
                             scp -o StrictHostKeyChecking=no  ${KEYFILE} $USERNAME@137.184.175.128:/root/ssh-key.pem
                             '''
+                    }
                 }
             }
         }
