@@ -30,18 +30,11 @@ pipeline {
 
                     withCredentials([
                         sshUserPrivateKey(credentialsId: 'anisble-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME'),
-                        [
-                            $class: 'AmazonWebServicesCredentialsBinding',
-                            credentialsId: 'aws-credentials',
-                            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
+
                     ]) {
                         remote.user = USERNAME
                         remote.identityFile = KEYFILE
                         sshCommand remote: remote, command: """
-                            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
                             ansible-playbook my-playbook.yaml
                         """
                     }
