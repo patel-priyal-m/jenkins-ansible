@@ -33,6 +33,7 @@ pipeline{
                     '''
   // ansible-playbook /root/playbook.yml --private-key /root/ssh-key.pem -i /root/hosts.ini
 
+                }
             }
         }
         stage('Deploy') {
