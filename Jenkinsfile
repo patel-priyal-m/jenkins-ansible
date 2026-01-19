@@ -17,9 +17,22 @@ pipeline{
                 }
             }
         }
-        stage('Test') {
+        stage('Execute Ansible Playbook on Ansible Server') {
             steps {
-                echo 'Testing...'
+                echo 'Calling Ansible Playbook to configure EC2 instances...'
+                def remote = [:]
+                remote.name = 'ansible-server'
+                remote.host = '137.184.175.128'
+                remote.allowAnyHosts = true
+
+                withCredentials([sshUserPrivateKey(credentialsId: 'anisble-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
+                    remote.user = USERNAME
+                    remote.identityFile = KEYFILE
+                    sshCommand remote: remote, command: '''
+                        ls -l
+                    '''
+  // ansible-playbook /root/playbook.yml --private-key /root/ssh-key.pem -i /root/hosts.ini
+
             }
         }
         stage('Deploy') {
