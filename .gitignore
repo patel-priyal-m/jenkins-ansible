@@ -1,0 +1,44 @@
+# Ignore temporary files created by Ansible
+*.retry
+
+# Ignore sensitive files
+*.vault
+ansible/vars
+ansible/hosts
+
+# Ignore backup files
+*.bak
+*.swp
+*~
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore Python virtual environments
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore Docker files
+.env
+docker-compose.override.yml
+
+# Ignore IDE/Editor files
+.vscode/
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Ignore Jenkins workspace files
+.jenkins/
+workspace/

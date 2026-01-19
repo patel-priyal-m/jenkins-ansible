@@ -1,0 +1,127 @@
+---
+- name: wait for ssh availability
+  hosts: aws_ec2
+  gather_facts: no
+  tasks:
+    - name: Wait for SSH to come up
+      wait_for:
+        port: 22
+        delay: 10
+        timeout: 100 
+        search_regex: OpenSSH
+        host: "{{ ansible_host | default(inventory_hostname) }}"
+      vars:
+        ansible_connection: local
+
+
+- name: setup and install docker
+  hosts: aws_ec2
+  become: yes
+  #become_user: root # not needed as become user is root by default
+  tasks: 
+    - name: Install packages
+      dnf:
+        name: 
+          - docker
+        update_cache: yes
+        state: present 
+    - name: install docker-compose  
+      get_url:
+        url: https://github.com/docker/compose/releases/latest/download/docker-compose-Linux-{{lookup('pipe', 'uname -m')}} 
+        dest: /usr/local/bin/docker-compose 
+        mode: +x 
+    - name: create docker compose plugin directory
+      file:
+        path: /usr/local/lib/docker/cli-plugins
+        state: directory
+        mode: '0755'
+    - name: create symlink for docker compose v2
+      file:
+        src: /usr/local/bin/docker-compose
+        dest: /usr/local/lib/docker/cli-plugins/docker-compose
+        state: link
+    - name: Start Docker service
+      systemd:
+        name: docker
+        state: started
+    # - name : install docker module # not needed as we already have python3
+    #   pip:
+    #     name: docker
+    # - name: Check if docker-compose (V1) is installed
+    #   command: docker-compose --version
+    #   register: compose_v1_check
+    #   ignore_errors: true
+
+    # - name: Debug result
+    #   debug:
+    #     msg: "Docker Compose V1 is installed"
+    #   when: compose_v1_check.rc == 0
+
+    # - name: Check if Docker Compose V2 is installed
+    #   command: docker compose version
+    #   register: docker_compose_v2_status
+    #   ignore_errors: true
+    
+    # - name: Report V2 Status
+    #   debug:
+    #     msg: "Docker Compose V2 is available: {{ docker_compose_v2_status.stdout }}"
+    #   when: docker_compose_v2_status.rc == 0
+    
+- name: add docker user
+  hosts: aws_ec2
+  become: yes
+  become_user: root
+  tasks:
+    - name: Add user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+    - name: reconnect session
+      meta: reset_connection
+
+
+- name: start docker docker_server
+  hosts: aws_ec2
+  vars_files:
+    - vars
+  vars_prompt:
+    - name: "docker_password_test"
+      prompt: "Enter Docker Hub Password (just for test , we are using pat from vars)"
+      private: yes
+  tasks:
+    - name: create demo-app directory
+      file:
+        path: /home/ec2-user/demo-app
+        state: directory
+        owner: ec2-user
+        group: ec2-user
+        mode: '0755'
+    - name: copy docker compose file
+      copy:
+        src: ../docker-compose.yml
+        dest: /home/ec2-user/demo-app/docker-compose.yml
+    - name: copy monitor html file
+      copy:
+        src: ../monitor.html
+        dest: /home/ec2-user/demo-app/monitor.html
+    - name: docker login
+      docker_login:
+        username: "{{ docker_username }}"
+        password: "{{ docker_password }}"
+        # registry_url: "{{ docker_registry_url }}"
+
+    - name: stop and remove existing containers
+      community.docker.docker_compose_v2:
+        project_src: /home/ec2-user/demo-app
+        state: absent
+      become: yes
+      become_user: ec2-user
+      ignore_errors: yes
+
+    - name: start docker containers from compoese file
+      community.docker.docker_compose_v2:
+        project_src: /home/ec2-user/demo-app
+        state: present
+      become: yes
+      become_user: ec2-user
