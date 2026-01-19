@@ -11,7 +11,7 @@ pipeline {
                     sh '''
                         scp -o StrictHostKeyChecking=no -r ./ansible/* root@${ANSIBLE_SERVER_IP}:/root
                     '''
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ansible-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'anisble-server-key', keyFileVariable: 'KEYFILE', usernameVariable: 'USERNAME')]) {
                         sh '''
                             scp -o StrictHostKeyChecking=no  ${KEYFILE} root@${ANSIBLE_SERVER_IP}:/root/id_ed25519
                             '''
